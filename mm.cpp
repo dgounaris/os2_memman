@@ -50,7 +50,7 @@ void memMan(int semId, Record* rpf, Record* rps) {
     }
 }
 
-PageHashNode::PageHashNode(unsigned int page): page(page), next(NULL) {}
+PageHashNode::PageHashNode(unsigned int page, unsigned int pId): page(page), pId(pId), next(NULL) {}
 
 PageHashTable::PageHashTable() {
     table = new PageHashNode*[100]();
@@ -73,17 +73,17 @@ unsigned int PageHashTable::getHash(unsigned int page) {
     return page % 100;
 }
 
-void PageHashTable::put(unsigned int page) {
+void PageHashTable::put(unsigned int page, unsigned int pId) {
     unsigned int bucketIndex = getHash(page);
     PageHashNode* bucket = table[bucketIndex];
     if (bucket == NULL) {
-        bucket = new PageHashNode(page);
+        bucket = new PageHashNode(page, pId);
         return;
     }
     while (bucket->next != NULL) {
         bucket = bucket->next;
     }
-    bucket->next = new PageHashNode(page);
+    bucket->next = new PageHashNode(page, pId);
 }
 
 bool PageHashTable::contains(unsigned int page) {

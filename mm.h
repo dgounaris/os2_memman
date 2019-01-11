@@ -10,8 +10,9 @@ typedef struct Record {
 class PageHashNode {
 public:
     unsigned int page;
+    unsigned int pId; //which pid loaded this page
     PageHashNode* next;
-    PageHashNode(unsigned int page);
+    PageHashNode(unsigned int page, unsigned int pId);
 };
 
 class PageHashTable {
@@ -19,7 +20,7 @@ class PageHashTable {
     unsigned int getHash(unsigned int page);
     PageHashTable();
     ~PageHashTable();
-    void put(unsigned int page);
+    void put(unsigned int page, unsigned int pId);
     bool contains(unsigned int page);
     void remove(unsigned int page);
 };
