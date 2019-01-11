@@ -16,6 +16,7 @@ public:
 };
 
 class PageHashTable {
+public:
     PageHashNode** table;
     unsigned int getHash(unsigned int page);
     PageHashTable();

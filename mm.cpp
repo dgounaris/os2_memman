@@ -15,6 +15,7 @@ void memMan(int semId, Record* rpf, Record* rps) {
     struct sembuf semUp = {0, 1, 0};
     int q = 2;
     printf("Memory management process started\n");
+    PageHashTable pageHashTable;
     int i, j;
     for (i = 0; i < 3; i++) {
         semUp.sem_num = 0;
@@ -26,8 +27,12 @@ void memMan(int semId, Record* rpf, Record* rps) {
             semop(semId, &semDown, 1); //down parse completion to consume
             printf("%d %x %d\n", rpf->process, rpf->address, rpf->dirty);
             unsigned int currentPageToLoad = rpf->address/4096;
-
-            //todo implement hashing
+            pageHashTable.put(currentPageToLoad, rpf->process);
+            if (pageHashTable.contains(currentPageToLoad)) {
+                printf("Memory address stored successfully!\n");
+            } else {
+                printf("Error while storing!\n");
+            }
             //todo implement fwf algorithm
             semUp.sem_num = 4;
             semUp.sem_op = 1;
@@ -41,7 +46,13 @@ void memMan(int semId, Record* rpf, Record* rps) {
             semDown.sem_op = -1;
             semop(semId, &semDown, 1); //down parse completion to consume
             printf("%d %x %d\n", rps->process, rps->address, rps->dirty);
-            //todo implement hashing
+            unsigned int currentPageToLoad = rpf->address/4096;
+            pageHashTable.put(currentPageToLoad, rpf->process);
+            if (pageHashTable.contains(currentPageToLoad)) {
+                printf("Memory address stored successfully!\n");
+            } else {
+                printf("Error while storing!\n");
+            }
             //todo implement fwf algorithm
             semUp.sem_num = 5;
             semUp.sem_op = 1;
@@ -77,7 +88,7 @@ void PageHashTable::put(unsigned int page, unsigned int pId) {
     unsigned int bucketIndex = getHash(page);
     PageHashNode* bucket = table[bucketIndex];
     if (bucket == NULL) {
-        bucket = new PageHashNode(page, pId);
+        table[bucketIndex] = new PageHashNode(page, pId);
         return;
     }
     while (bucket->next != NULL) {
