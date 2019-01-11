@@ -16,7 +16,6 @@ using namespace std;
 void readFirst(int semId, Record* rpf) {
     struct sembuf semDown = {0, -1, 0};
     struct sembuf semUp = {0, 1, 0};
-    union semun arg; //todo remove
     printf("Read process #1 started\n");
     ifstream inFile("./input1.txt");
     string line;
@@ -43,7 +42,7 @@ void readFirst(int semId, Record* rpf) {
                 semop(semId, &semDown, 1);
                 rpf->process = getpid();
                 rpf->address = memaddress;
-                rpf->dirty = 0;
+                accesstypeflag == 0 ? rpf->dirty = 0 : rpf->dirty = 1;
                 semUp.sem_num = 2;
                 semop(semId, &semUp, 1); //up parse completion flag
             }

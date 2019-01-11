@@ -25,6 +25,8 @@ void memMan(int semId, Record* rpf, Record* rps) {
             semDown.sem_op = -1;
             semop(semId, &semDown, 1); //down parse completion to consume
             printf("%d %x %d\n", rpf->process, rpf->address, rpf->dirty);
+            unsigned int currentPageToLoad = rpf->address/4096;
+
             //todo implement hashing
             //todo implement fwf algorithm
             semUp.sem_num = 4;
@@ -37,13 +39,77 @@ void memMan(int semId, Record* rpf, Record* rps) {
         for (j = 0; j < q; j++) {
             semDown.sem_num = 3;
             semDown.sem_op = -1;
-            semop(semId, &semDown, 1); //up parse allowance to limit
+            semop(semId, &semDown, 1); //down parse completion to consume
             printf("%d %x %d\n", rps->process, rps->address, rps->dirty);
             //todo implement hashing
             //todo implement fwf algorithm
             semUp.sem_num = 5;
             semUp.sem_op = 1;
             semop(semId, &semUp, 1); //up sharedmem flag to unblock pm
+        }
+    }
+}
+
+PageHashNode::PageHashNode(unsigned int page): page(page), next(NULL) {}
+
+PageHashTable::PageHashTable() {
+    table = new PageHashNode*[100]();
+}
+
+PageHashTable::~PageHashTable() {
+    for (int i = 0; i < 100; i++) {
+        PageHashNode* bucket = table[i];
+        while (bucket != NULL) {
+            PageHashNode* prev = bucket;
+            bucket = prev->next;
+            delete prev;
+        }
+    }
+    // destroy the hash table
+    delete [] table;
+}
+
+unsigned int PageHashTable::getHash(unsigned int page) {
+    return page % 100;
+}
+
+void PageHashTable::put(unsigned int page) {
+    unsigned int bucketIndex = getHash(page);
+    PageHashNode* bucket = table[bucketIndex];
+    if (bucket == NULL) {
+        bucket = new PageHashNode(page);
+        return;
+    }
+    while (bucket->next != NULL) {
+        bucket = bucket->next;
+    }
+    bucket->next = new PageHashNode(page);
+}
+
+bool PageHashTable::contains(unsigned int page) {
+    unsigned int bucketIndex = getHash(page);
+    PageHashNode* bucket = table[bucketIndex];
+    while (bucket != NULL) {
+        if (bucket->page == page) {
+            return true;
+        }
+        bucket = bucket->next;
+    }
+    return false;
+}
+
+void PageHashTable::remove(unsigned int page) {
+    unsigned int bucketIndex = getHash(page);
+    PageHashNode* bucket = table[bucketIndex];
+    PageHashNode* prev = NULL;
+    while (bucket != NULL) {
+        if (bucket->page == page) {
+            if (prev == NULL) {
+                table[bucketIndex] = bucket->next;
+            } else {
+                prev->next = bucket->next;
+            }
+            delete bucket;
         }
     }
 }

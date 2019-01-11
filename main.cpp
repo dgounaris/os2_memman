@@ -61,7 +61,6 @@ int main(int argc, char *argv[]) {
 }
 
 void initSems(int semId) {
-    //todo here is the init, not in generatesemops
     union semun arg;
     int i = 0;
     //first state parse allowance
