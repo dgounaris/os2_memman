@@ -7,6 +7,11 @@ typedef struct Record {
     int dirty; //0 clean, 1 dirty
 } Record;
 
+typedef struct Stats {
+    unsigned int readNum;
+    unsigned int writeNum;
+} Stats;
+
 class PageHashNode {
 public:
     unsigned int page;
@@ -22,12 +27,13 @@ public:
     unsigned int getHash(unsigned int page);
     PageHashTable();
     ~PageHashTable();
-    void put(unsigned int page, unsigned int pId, int dirty);
+    void put(unsigned int page, unsigned int pId, int dirty, Stats* ssm);
     bool contains(unsigned int page);
-    void remove(unsigned int page);
+    void remove(unsigned int page, Stats* ssm);
     void flagDirty(unsigned int page);
+    void flush(unsigned int pId, Stats* ssm);
 };
 
-void memMan(int semId, Record* rpf, Record* rps);
+void memMan(int semId, Record* rpf, Record* rps, Stats* ssm);
 
 #endif //ASKISI2_HATZ_MM_H

@@ -10,7 +10,7 @@
 #include <sys/sem.h>
 #include <sys/time.h>
 
-void memMan(int semId, Record* rpf, Record* rps) {
+void memMan(int semId, Record* rpf, Record* rps, Stats* ssm) {
     struct sembuf semDown = {0, -1, 0};
     struct sembuf semUp = {0, 1, 0};
     int q = 2;
@@ -31,18 +31,19 @@ void memMan(int semId, Record* rpf, Record* rps) {
                 //only update dirtyness
                 pageHashTable.flagDirty(currentPageToLoad);
             } else {
-                pageHashTable.put(currentPageToLoad, rpf->process, rpf->dirty);
+                //todo implement fwf algorithm
+                pageHashTable.put(currentPageToLoad, rpf->process, rpf->dirty, ssm);
                 if (pageHashTable.contains(currentPageToLoad)) {
                     printf("Memory address stored successfully!\n");
                 } else {
                     printf("Error while storing!\n");
                 }
             }
-            pageHashTable.remove(currentPageToLoad);
+            //todo remove test removal here
+            pageHashTable.remove(currentPageToLoad, ssm);
             if (!pageHashTable.contains(currentPageToLoad)) {
                 printf("Memory address deleted successfully!\n");
             }
-            //todo implement fwf algorithm
             semUp.sem_num = 4;
             semUp.sem_op = 1;
             semop(semId, &semUp, 1); //up sharedmem flag to unblock pm
@@ -60,18 +61,19 @@ void memMan(int semId, Record* rpf, Record* rps) {
                 //only update dirtyness
                 pageHashTable.flagDirty(currentPageToLoad);
             } else {
-                pageHashTable.put(currentPageToLoad, rpf->process, rpf->dirty);
+                //todo implement fwf algorithm
+                pageHashTable.put(currentPageToLoad, rpf->process, rpf->dirty, ssm);
                 if (pageHashTable.contains(currentPageToLoad)) {
                     printf("Memory address stored successfully!\n");
                 } else {
                     printf("Error while storing!\n");
                 }
             }
-            pageHashTable.remove(currentPageToLoad);
+            //todo remove test removal here
+            pageHashTable.remove(currentPageToLoad, ssm);
             if (!pageHashTable.contains(currentPageToLoad)) {
                 printf("Memory address deleted successfully!\n");
             }
-            //todo implement fwf algorithm
             semUp.sem_num = 5;
             semUp.sem_op = 1;
             semop(semId, &semUp, 1); //up sharedmem flag to unblock pm
@@ -102,18 +104,21 @@ unsigned int PageHashTable::getHash(unsigned int page) {
 }
 
 //todo add a parameter of shared memory segment to counters for read from disk!!!
-void PageHashTable::put(unsigned int page, unsigned int pId, int dirty) {
+void PageHashTable::put(unsigned int page, unsigned int pId, int dirty, Stats* ssm) {
     unsigned int bucketIndex = getHash(page);
     PageHashNode* bucket = table[bucketIndex];
     if (bucket == NULL) {
         table[bucketIndex] = new PageHashNode(page, pId, dirty);
+        printf("Reading from disk!\n");
+        ssm->readNum++;
         return;
     }
     while (bucket->next != NULL) {
         bucket = bucket->next;
     }
     bucket->next = new PageHashNode(page, pId, dirty);
-    printf("Reading from disk!");
+    ssm->readNum++;
+    printf("Reading from disk!\n");
 }
 
 bool PageHashTable::contains(unsigned int page) {
@@ -129,7 +134,7 @@ bool PageHashTable::contains(unsigned int page) {
 }
 
 //todo add a parameter of shared memory segment to counters for write to disk!!!
-void PageHashTable::remove(unsigned int page) {
+void PageHashTable::remove(unsigned int page, Stats* ssm) {
     unsigned int bucketIndex = getHash(page);
     PageHashNode* bucket = table[bucketIndex];
     PageHashNode* prev = NULL;
@@ -142,6 +147,7 @@ void PageHashTable::remove(unsigned int page) {
             }
             if (bucket->dirty == 1) {
                 printf("Writing to disk!\n");
+                ssm->writeNum++;
             }
             delete bucket;
             return;
@@ -159,4 +165,8 @@ void PageHashTable::flagDirty(unsigned int page) {
         }
         bucket = bucket->next;
     }
+}
+
+void flush(unsigned int pId, Stats* ssm) {
+    //todo implement
 }

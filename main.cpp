@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
     Record* rpf = (Record*)shmat(readProcessFirst, NULL, 0);
     int readProcessSecond = shmget((key_t) 802, sizeof(Record), IPC_CREAT | 0666);
     Record* rps = (Record*)shmat(readProcessSecond, NULL, 0);
+    int statsMemory = shmget((key_t) 803, sizeof(Stats), IPC_CREAT | 0666);
+    Stats* ssm = (Stats*)shmat(statsMemory, NULL, 0);
     if (fork() == 0) {
         readFirst(semId, rpf);
         return 0;
@@ -42,7 +44,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     if (fork() == 0) {
-        memMan(semId, rpf, rps);
+        memMan(semId, rpf, rps, ssm);
         return 0;
     }
 
@@ -55,9 +57,10 @@ int main(int argc, char *argv[]) {
         semctl(semId, i, IPC_RMID, 0);
     }
 
-    shmdt(rpf); shmdt(rps);
+    shmdt(rpf); shmdt(rps); shmdt(ssm);
     shmctl(readProcessFirst, 0, IPC_RMID);
     shmctl(readProcessSecond, 0, IPC_RMID);
+    shmctl(statsMemory, 0, IPC_RMID);
 }
 
 void initSems(int semId) {
