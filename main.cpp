@@ -16,7 +16,7 @@ void initSems(int semId);
 int main(int argc, char *argv[]) {
     int k = 2;
     int q = 2;
-    int memsegnum = 10;
+    int memsegnum = 2;
     int memsegsize = 4096;
     if (argc == 4) {
         k = atoi(argv[1]);
@@ -44,13 +44,16 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     if (fork() == 0) {
-        memMan(semId, rpf, rps, ssm);
+        memMan(semId, rpf, rps, ssm, k, q, memsegnum);
         return 0;
     }
 
     int status;
     while (wait(&status) > 0); //wait for all children to finish
     wait(&status);
+
+    printf("Times read from disk: %d\n", ssm->readNum);
+    printf("Times written to disk: %d\n", ssm->writeNum);
 
     int i;
     for (i = 0; i < numOfSemaphores; i++) {

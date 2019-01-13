@@ -23,6 +23,8 @@ public:
 
 class PageHashTable {
 public:
+    int size; //counter for the elements in the table
+    int tolerated; //tolerated page faults so far, resets on every flush
     PageHashNode** table;
     unsigned int getHash(unsigned int page);
     PageHashTable();
@@ -32,8 +34,9 @@ public:
     void remove(unsigned int page, Stats* ssm);
     void flagDirty(unsigned int page);
     void flush(unsigned int pId, Stats* ssm);
+    void flush(Stats* ssm);
 };
 
-void memMan(int semId, Record* rpf, Record* rps, Stats* ssm);
+void memMan(int semId, Record* rpf, Record* rps, Stats* ssm, int k, int q, int memsegnum);
 
 #endif //ASKISI2_HATZ_MM_H
